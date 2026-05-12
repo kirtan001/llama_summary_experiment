@@ -1,0 +1,52 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: llama_summary_ollama
+    volumes:
+      - ollama_models:/root/.ollama
+    expose:
+      - "11434"
+    restart: unless-stopped
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: llama_summary_ollama_pull
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    command: ["/bin/sh", "-c", "until ollama list >/dev/null 2>&1; do sleep 2; done; ollama pull ${OLLAMA_MODEL:-llama3.2:3b-instruct-q4_K_M}"]
+    depends_on:
+      - ollama
+    restart: "no"
+
+  summary-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: llama_summary_api
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_TIMEOUT_SECONDS=300
+      - RUNS_DIR=/runs
+    volumes:
+      - ./runs:/runs
+    ports:
+      - "127.0.0.1:8010:8000"
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  summary-ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ui
+    container_name: llama_summary_ui
+    environment:
+      - SUMMARY_API_URL=http://summary-api:8000
+    ports:
+      - "8510:8510"
+    depends_on:
+      - summary-api
+    restart: unless-stopped
+
+volumes:
+  ollama_models:

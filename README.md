@@ -1,0 +1,77 @@
+# Llama Summary Experiment Lab
+
+Standalone lab for testing local Llama summaries against satellite evidence batches. This does not modify `shadow_route` or `sat_library`.
+
+## Export A Batch
+
+Run from the repo root with the SAT Library conda environment:
+
+```powershell
+cd d:\pulse_orbital\review
+conda activate scraper_env
+python llama_summary_experiment/tools/export_satellite_batch.py --limit 100 --strategy diverse --output llama_summary_experiment/data/sat_batch_100.json
+```
+
+Strategies:
+
+- `diverse`: mix evidence counts and countries.
+- `random`: random satellites with evidence.
+- `top-evidence`: satellites with the most evidence records.
+
+## Run With Docker
+
+```bash
+cd llama_summary_experiment
+docker compose up --build
+```
+
+The compose file starts:
+
+- `ollama` on the internal Docker network.
+- `summary-api` on `127.0.0.1:8010`.
+- `summary-ui` on `http://localhost:8510`.
+
+The `ollama-pull` helper pulls `llama3.2:3b-instruct-q4_K_M` by default. To use the CPU fallback:
+
+```bash
+OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M docker compose up --build
+```
+
+## Use The UI
+
+1. Open `http://localhost:8510`.
+2. Upload the exported JSON batch.
+3. Choose model/config.
+4. Start the run.
+5. Watch logs and progress.
+6. Download `results.json`, `results.csv`, `comparison.md`, `run.log`, or `run_bundle.zip`.
+
+Each satellite is summarized independently. The model never receives the full 100-satellite batch in one prompt.
+
+## Output Files
+
+Every run writes:
+
+```text
+runs/<run_id>/
+  input.json
+  config.json
+  run.log
+  results.jsonl
+  results.json
+  results.csv
+  comparison.md
+  errors.json
+  run_bundle.zip
+```
+
+## Local API Dev
+
+If running without Docker, start Ollama separately, then:
+
+```bash
+cd llama_summary_experiment
+pip install -r requirements.txt
+uvicorn app.api:app --host 0.0.0.0 --port 8010
+streamlit run app/ui.py --server.port=8510
+```
