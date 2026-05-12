@@ -31,11 +31,7 @@ The local compose file starts:
 - `summary-api` on `127.0.0.1:8010`.
 - `summary-ui` on `http://localhost:8510`.
 
-The `ollama-pull` helper pulls `llama3.2:3b-instruct-q4_K_M` by default. To use the CPU fallback:
-
-```bash
-OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M docker compose -f docker-compose.local.yml up --build
-```
+The `ollama-pull` helper pulls `llama3.2:3b-instruct-q4_K_M`.
 
 ## GitHub Actions Docker Images
 
@@ -49,6 +45,8 @@ ghcr.io/kirtan001/llama_summary_experiment-ui:latest
 The workflow also publishes branch and short SHA tags. Pull requests build the images for validation but do not push them.
 
 ## Deploy On EC2
+
+For the full student/free-tier EC2 plan, see [`EC2_DEPLOYMENT_PLAN.md`](EC2_DEPLOYMENT_PLAN.md).
 
 Install Docker and the Compose plugin on the EC2 instance, then put this repo's `docker-compose.yml` and `.env` in one folder. Start from the example:
 
