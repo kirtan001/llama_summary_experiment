@@ -18,14 +18,14 @@ Strategies:
 - `random`: random satellites with evidence.
 - `top-evidence`: satellites with the most evidence records.
 
-## Run With Docker
+## Run Locally With Docker
 
 ```bash
 cd llama_summary_experiment
-docker compose up --build
+docker compose -f docker-compose.local.yml up --build
 ```
 
-The compose file starts:
+The local compose file starts:
 
 - `ollama` on the internal Docker network.
 - `summary-api` on `127.0.0.1:8010`.
@@ -34,8 +34,51 @@ The compose file starts:
 The `ollama-pull` helper pulls `llama3.2:3b-instruct-q4_K_M` by default. To use the CPU fallback:
 
 ```bash
-OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M docker compose up --build
+OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M docker compose -f docker-compose.local.yml up --build
 ```
+
+## GitHub Actions Docker Images
+
+Pushing to `main` runs `.github/workflows/docker-images.yml` and publishes:
+
+```text
+ghcr.io/kirtan001/llama_summary_experiment-api:latest
+ghcr.io/kirtan001/llama_summary_experiment-ui:latest
+```
+
+The workflow also publishes branch and short SHA tags. Pull requests build the images for validation but do not push them.
+
+## Deploy On EC2
+
+Install Docker and the Compose plugin on the EC2 instance, then put this repo's `docker-compose.yml` and `.env` in one folder. Start from the example:
+
+```bash
+cp .env.example .env
+```
+
+For the default GitHub repository, `.env.example` already points to the correct images:
+
+```text
+IMAGE_REGISTRY=ghcr.io
+IMAGE_OWNER=kirtan001
+IMAGE_REPO=llama_summary_experiment
+IMAGE_TAG=latest
+OLLAMA_MODEL=llama3.2:3b-instruct-q4_K_M
+```
+
+Then run:
+
+```bash
+docker compose up -d
+```
+
+The deployment compose file uses `pull_policy: always`, so `docker compose up -d` pulls the latest published API/UI images before starting the containers. If the GHCR package is private, log in on EC2 first:
+
+```bash
+docker login ghcr.io -u kirtan001
+```
+
+Open TCP port `8510` in the EC2 security group, then visit `http://<EC2_PUBLIC_IP>:8510`.
 
 ## Use The UI
 

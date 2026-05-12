@@ -2,7 +2,6 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: llama_summary_ollama
-    pull_policy: always
     volumes:
       - ollama_models:/root/.ollama
     expose:
@@ -12,7 +11,6 @@ services:
   ollama-pull:
     image: ollama/ollama:latest
     container_name: llama_summary_ollama_pull
-    pull_policy: always
     environment:
       - OLLAMA_HOST=http://ollama:11434
     command: ["/bin/sh", "-c", "until ollama list >/dev/null 2>&1; do sleep 2; done; ollama pull ${OLLAMA_MODEL:-llama3.2:3b-instruct-q4_K_M}"]
@@ -21,9 +19,10 @@ services:
     restart: "no"
 
   summary-api:
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_OWNER:-kirtan001}/${IMAGE_REPO:-llama_summary_experiment}-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
     container_name: llama_summary_api
-    pull_policy: always
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - OLLAMA_TIMEOUT_SECONDS=300
@@ -37,9 +36,10 @@ services:
     restart: unless-stopped
 
   summary-ui:
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_OWNER:-kirtan001}/${IMAGE_REPO:-llama_summary_experiment}-ui:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ui
     container_name: llama_summary_ui
-    pull_policy: always
     environment:
       - SUMMARY_API_URL=http://summary-api:8000
     ports:
